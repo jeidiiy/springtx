@@ -9,39 +9,44 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+@Slf4j
 @SpringBootTest
-public class TxLevelTest {
+public class InternalCallV1Test {
 
     @Autowired
-    LevelService levelService;
+    CallService callService;
 
     @Test
-    void orderTest() {
-        levelService.read();
-        levelService.write();
+    void printProxy() {
+        log.info("callService class={}", callService.getClass());
+    }
+
+    @Test
+    void internalCall() {
+        callService.internal();
+    }
+
+    @TestConfiguration
+    static class InternalCallV1TestConfig {
+        @Bean
+        public CallService callService() {
+            return new CallService();
+        }
     }
 
     @Slf4j
-    @Transactional(readOnly = true)
-    static class LevelService {
+    static class CallService {
 
-        @Transactional(readOnly = false)
-        public void write() {
-            log.info("call write");
+        public void external() {
+            log.info("call external");
             printTxInfo();
+            internal();
         }
 
-        public void read() {
-            log.info("call read");
+        @Transactional
+        public void internal() {
+            log.info("call internal");
             printTxInfo();
-        }
-
-        @TestConfiguration
-        static class TxLevelTestConfig {
-            @Bean
-            LevelService levelService() {
-                return new LevelService();
-            }
         }
 
         private void printTxInfo() {
